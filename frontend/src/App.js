@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Admin from "./Admin";
+import Logo from "./Logo";
 import './App.css';
 
 const properties = [
@@ -59,10 +60,7 @@ function App() {
       )}
 
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'2rem'}}>
-        <div>
-          <h1 onClick={() => setShowAdmin(true)} style={{fontSize:'2.5rem',color:'#60A5FA',margin:0,cursor:'pointer'}}>blockPad</h1>
-          <p style={{color:'#93C5FD',margin:0,fontSize:'0.85rem'}}>Crypto-Funded Real Estate</p>
-        </div>
+        <Logo onClick={() => setShowAdmin(true)} />
         <button onClick={() => setShowWalletModal(true)} style={{backgroundColor:walletConnected?'#052e16':'#1D4ED8',border:walletConnected?'2px solid #22c55e':'2px solid #60A5FA',color:walletConnected?'#22c55e':'#fff',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>
           {walletConnected ? 'Connected: '+walletName : 'Connect Wallet'}
         </button>
