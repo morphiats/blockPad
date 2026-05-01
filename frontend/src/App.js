@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import './App.css';
 
 const properties = [
@@ -9,12 +9,65 @@ const properties = [
 
 function App() {
   const [walletConnected, setWalletConnected] = useState(false);
+  const [walletName, setWalletName] = useState(null);
+  const [availableWallets, setAvailableWallets] = useState([]);
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [step, setStep] = useState('browse');
 
+  useEffect(() => {
+    const checkWallets = () => {
+      const wallets = [];
+      if (window.cardano?.nami) wallets.push({ name: 'Nami', key: 'nami' });
+      if (window.cardano?.eternl) wallets.push({ name: 'Eternl', key: 'eternl' });
+      if (window.cardano?.flint) wallets.push({ name: 'Flint', key: 'flint' });
+      if (window.cardano?.yoroi) wallets.push({ name: 'Yoroi', key: 'yoroi' });
+      setAvailableWallets(wallets);
+    };
+    checkWallets();
+  }, []);
+
+  const connectWallet = async (walletKey) => {
+    try {
+      const wallet = window.cardano[walletKey];
+      await wallet.enable();
+      setWalletConnected(true);
+      setWalletName(walletKey.charAt(0).toUpperCase() + walletKey.slice(1));
+      setShowWalletModal(false);
+    } catch (err) {
+      alert('Failed to connect wallet. Make sure your wallet extension is installed and unlocked.');
+    }
+  };
+
   return (
     <div style={{backgroundColor:'#000000',minHeight:'100vh',color:'#60A5FA',fontFamily:'Arial, sans-serif',padding:'2rem'}}>
+
+      {/* Wallet Modal */}
+      {showWalletModal && (
+        <div style={{position:'fixed',inset:0,backgroundColor:'rgba(0,0,0,0.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div style={{backgroundColor:'#060D1A',border:'1px solid #1D4ED8',borderRadius:'8px',padding:'2rem',width:'320px'}}>
+            <h3 style={{color:'#FFFFFF',marginBottom:'1.5rem',textAlign:'center'}}>Connect Wallet</h3>
+            {availableWallets.length > 0 ? (
+              availableWallets.map(w => (
+                <button key={w.key} onClick={() => connectWallet(w.key)} style={{width:'100%',backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#BFDBFE',padding:'1rem',fontSize:'1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'0.75rem',textAlign:'left'}}>
+                  {w.name} Wallet
+                </button>
+              ))
+            ) : (
+              <div>
+                <p style={{color:'#BFDBFE',fontSize:'0.85rem',marginBottom:'1rem',textAlign:'center'}}>No Cardano wallet detected.</p>
+                <p style={{color:'#93C5FD',fontSize:'0.8rem',textAlign:'center'}}>Install Nami or Eternl browser extension to continue.</p>
+                <a href="https://namiwallet.io" target="_blank" rel="noreferrer" style={{display:'block',textAlign:'center',color:'#60A5FA',marginTop:'1rem',fontSize:'0.85rem'}}>Get Nami Wallet</a>
+                <a href="https://eternl.io" target="_blank" rel="noreferrer" style={{display:'block',textAlign:'center',color:'#60A5FA',marginTop:'0.5rem',fontSize:'0.85rem'}}>Get Eternl Wallet</a>
+              </div>
+            )}
+            <button onClick={() => setShowWalletModal(false)} style={{width:'100%',backgroundColor:'transparent',border:'1px solid #444',color:'#666',padding:'0.75rem',cursor:'pointer',borderRadius:'4px',marginTop:'0.5rem'}}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'2rem'}}>
@@ -22,8 +75,8 @@ function App() {
           <h1 style={{fontSize:'2.5rem',color:'#60A5FA',margin:0}}>blockPad</h1>
           <p style={{color:'#93C5FD',margin:0,fontSize:'0.85rem'}}>Crypto-Funded Real Estate</p>
         </div>
-        <button onClick={() => setWalletConnected(!walletConnected)} style={{backgroundColor:walletConnected?'#052e16':'#1D4ED8',border:walletConnected?'2px solid #22c55e':'2px solid #60A5FA',color:walletConnected?'#22c55e':'#ffffff',padding:'0.75rem 1.5rem',fontSize:'0.9rem',cursor:'pointer',borderRadius:'4px'}}>
-          {walletConnected ? 'Wallet Connected' : 'Connect Wallet'}
+        <button onClick={() => walletConnected ? null : setShowWalletModal(true)} style={{backgroundColor:walletConnected?'#052e16':'#1D4ED8',border:walletConnected?'2px solid #22c55e':'2px solid #60A5FA',color:walletConnected?'#22c55e':'#ffffff',padding:'0.75rem 1.5rem',fontSize:'0.9rem',cursor:'pointer',borderRadius:'4px'}}>
+          {walletConnected ? `Connected: ${walletName}` : 'Connect Wallet'}
         </button>
       </div>
 
@@ -52,12 +105,10 @@ function App() {
       {/* Payment Step */}
       {step === 'pay' && selectedProperty && (
         <div style={{maxWidth:'600px',margin:'0 auto'}}>
-          <button onClick={() => setStep('browse')} style={{background:'none',border:'1px solid #1D4ED8',color:'#60A5FA',padding:'0.5rem 1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'1.5rem'}}>
-            Back to listings
-          </button>
+          <button onClick={() => setStep('browse')} style={{background:'none',border:'1px solid #1D4ED8',color:'#60A5FA',padding:'0.5rem 1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'1.5rem'}}>Back</button>
           <div style={{border:'1px solid #1D4ED8',padding:'2rem',backgroundColor:'#060D1A',borderRadius:'4px'}}>
             <h2 style={{color:'#FFFFFF',marginBottom:'0.5rem'}}>Purchase Property</h2>
-            <p style={{color:'#BFDBFE',marginBottom:'0.5rem',fontSize:'0.85rem'}}>{selectedProperty.address}</p>
+            <p style={{color:'#BFDBFE',fontSize:'0.85rem'}}>{selectedProperty.address}</p>
             <h3 style={{color:'#60A5FA',marginBottom:'2rem'}}>${selectedProperty.price.toLocaleString()}</h3>
             <p style={{color:'#93C5FD',marginBottom:'1rem'}}>Select payment method:</p>
             <div style={{display:'flex',gap:'1rem',flexWrap:'wrap',marginBottom:'2rem'}}>
@@ -77,9 +128,7 @@ function App() {
       {/* KYC Step */}
       {step === 'kyc' && (
         <div style={{maxWidth:'600px',margin:'0 auto'}}>
-          <button onClick={() => setStep('pay')} style={{background:'none',border:'1px solid #1D4ED8',color:'#60A5FA',padding:'0.5rem 1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'1.5rem'}}>
-            Back
-          </button>
+          <button onClick={() => setStep('pay')} style={{background:'none',border:'1px solid #1D4ED8',color:'#60A5FA',padding:'0.5rem 1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'1.5rem'}}>Back</button>
           <div style={{border:'1px solid #1D4ED8',padding:'2rem',backgroundColor:'#060D1A',borderRadius:'4px'}}>
             <h2 style={{color:'#FFFFFF',marginBottom:'0.5rem'}}>Identity Verification</h2>
             <p style={{color:'#BFDBFE',marginBottom:'2rem',fontSize:'0.85rem'}}>Required for compliance. Your data is encrypted and secure.</p>
@@ -105,7 +154,7 @@ function App() {
             <p style={{color:'#BFDBFE',marginBottom:'2rem',fontSize:'0.85rem'}}>Your funds are secured in Cardano smart contract escrow.</p>
             {['KYC Verified','Funds in Escrow','Title Search','Legal Review','Final Closing'].map((milestone, i) => (
               <div key={i} style={{display:'flex',alignItems:'center',gap:'1rem',marginBottom:'0.75rem',padding:'0.75rem',border:'1px solid #1D4ED8',borderRadius:'4px',backgroundColor:'#0A1628'}}>
-                <div style={{color: i < 2 ? '#22c55e' : '#444', fontSize:'1.2rem'}}>{i < 2 ? '✅' : '⏳'}</div>
+                <div style={{fontSize:'1.2rem'}}>{i < 2 ? 'OK' : '...'}</div>
                 <span style={{color: i < 2 ? '#22c55e' : '#666'}}>{milestone}</span>
               </div>
             ))}
