@@ -1,37 +1,8 @@
 import { useState, useEffect } from "react";
 import Admin from "./Admin";
 import Logo from "./Logo";
+import properties from "./properties";
 import './App.css';
-
-const properties = [
-  { 
-    id: 1, 
-    address: "123 Miami Beach Blvd, Miami FL", 
-    price: 850000, 
-    beds: 3, 
-    baths: 2, 
-    sqft: 1800,
-    img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop"
-  },
-  { 
-    id: 2, 
-    address: "456 Brickell Ave, Miami FL", 
-    price: 1200000, 
-    beds: 4, 
-    baths: 3, 
-    sqft: 2400,
-    img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop"
-  },
-  { 
-    id: 3, 
-    address: "789 Ocean Drive, Miami Beach FL", 
-    price: 650000, 
-    beds: 2, 
-    baths: 2, 
-    sqft: 1200,
-    img: "https://images.unsplash.com/photo-1494526585095-c41746248156?w=400&h=250&fit=crop"
-  },
-];
 
 function App() {
   const [showAdmin, setShowAdmin] = useState(false);
@@ -43,6 +14,7 @@ function App() {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [step, setStep] = useState('browse');
+  const [filter, setFilter] = useState('All');
 
   useEffect(() => {
     const wallets = [];
@@ -58,9 +30,7 @@ function App() {
       setWalletConnected(true);
       setWalletName(key.charAt(0).toUpperCase() + key.slice(1));
       setShowWalletModal(false);
-    } catch (err) {
-      alert('Failed to connect Cardano wallet.');
-    }
+    } catch (err) { alert('Failed to connect Cardano wallet.'); }
   };
 
   const connectMetaMask = async () => {
@@ -70,15 +40,16 @@ function App() {
       setWalletName('MetaMask');
       setWalletAddress(accounts[0].slice(0,6)+'...'+accounts[0].slice(-4));
       setShowWalletModal(false);
-    } catch (err) {
-      alert('Failed to connect MetaMask.');
-    }
+    } catch (err) { alert('Failed to connect MetaMask.'); }
   };
 
   const connectWallet = (wallet) => {
     if (wallet.type === 'ethereum') connectMetaMask();
     else connectCardanoWallet(wallet.key);
   };
+
+  const types = ['All', ...new Set(properties.map(p => p.type))];
+  const filtered = filter === 'All' ? properties : properties.filter(p => p.type === filter);
 
   if (showAdmin) return <Admin onBack={() => setShowAdmin(false)} />;
 
@@ -88,10 +59,10 @@ function App() {
         <div style={{position:'fixed',inset:0,backgroundColor:'rgba(0,0,0,0.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
           <div style={{backgroundColor:'#060D1A',border:'1px solid #1D4ED8',borderRadius:'8px',padding:'2rem',width:'320px'}}>
             <h3 style={{color:'#fff',marginBottom:'0.5rem',textAlign:'center'}}>Connect Wallet</h3>
-            <p style={{color:'#93C5FD',fontSize:'0.8rem',textAlign:'center',marginBottom:'1.5rem'}}>Choose your wallet to continue</p>
+            <p style={{color:'#93C5FD',fontSize:'0.8rem',textAlign:'center',marginBottom:'1.5rem'}}>Choose your wallet</p>
             {availableWallets.length > 0 ? availableWallets.map(w => (
               <button key={w.key} onClick={() => connectWallet(w)} style={{width:'100%',backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#BFDBFE',padding:'1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'0.75rem',display:'flex',alignItems:'center',gap:'0.75rem'}}>
-                <span style={{fontSize:'1.2rem'}}>{w.name === 'MetaMask' ? '🦊' : '₳'}</span>
+                <span>{w.name === 'MetaMask' ? '🦊' : '₳'}</span>
                 <span>{w.name}</span>
                 <span style={{marginLeft:'auto',fontSize:'0.75rem',color:'#444'}}>{w.type === 'ethereum' ? 'ETH/USDC' : 'ADA/DJED'}</span>
               </button>
@@ -99,8 +70,8 @@ function App() {
               <div style={{textAlign:'center'}}>
                 <p style={{color:'#BFDBFE',fontSize:'0.85rem',marginBottom:'1rem'}}>No wallet detected.</p>
                 <a href="https://metamask.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA',marginBottom:'0.5rem'}}>Get MetaMask</a>
-                <a href="https://namiwallet.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA',marginBottom:'0.5rem'}}>Get Nami Wallet</a>
-                <a href="https://eternl.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA'}}>Get Eternl Wallet</a>
+                <a href="https://namiwallet.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA',marginBottom:'0.5rem'}}>Get Nami</a>
+                <a href="https://eternl.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA'}}>Get Eternl</a>
               </div>
             )}
             <button onClick={() => setShowWalletModal(false)} style={{width:'100%',backgroundColor:'transparent',border:'1px solid #444',color:'#666',padding:'0.75rem',cursor:'pointer',borderRadius:'4px',marginTop:'0.5rem'}}>Cancel</button>
@@ -117,13 +88,21 @@ function App() {
 
       {step === 'browse' && (
         <div>
-          <h2 style={{color:'#fff',marginBottom:'1.5rem'}}>Available Properties</h2>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem',flexWrap:'wrap',gap:'1rem'}}>
+            <h2 style={{color:'#fff',margin:0}}>Available Properties ({filtered.length})</h2>
+            <div style={{display:'flex',gap:'0.5rem',flexWrap:'wrap'}}>
+              {types.map(t => (
+                <button key={t} onClick={() => setFilter(t)} style={{backgroundColor:filter===t?'#1D4ED8':'transparent',border:'1px solid #1D4ED8',color:filter===t?'#fff':'#60A5FA',padding:'0.4rem 1rem',cursor:'pointer',borderRadius:'20px',fontSize:'0.8rem'}}>{t}</button>
+              ))}
+            </div>
+          </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:'1.5rem'}}>
-            {properties.map(p => (
+            {filtered.map(p => (
               <div key={p.id} style={{border:'1px solid #1D4ED8',backgroundColor:'#060D1A',borderRadius:'4px',overflow:'hidden'}}>
                 <img src={p.img} alt={p.address} style={{width:'100%',height:'200px',objectFit:'cover'}} />
                 <div style={{padding:'1.5rem'}}>
-                  <p style={{color:'#BFDBFE',fontSize:'0.85rem',margin:'0 0 0.5rem'}}>{p.address}</p>
+                  <span style={{backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#93C5FD',padding:'0.2rem 0.75rem',borderRadius:'20px',fontSize:'0.75rem'}}>{p.type}</span>
+                  <p style={{color:'#BFDBFE',fontSize:'0.85rem',margin:'0.75rem 0 0.5rem'}}>{p.address}</p>
                   <h3 style={{color:'#60A5FA',margin:'0 0 0.5rem'}}>${p.price.toLocaleString()}</h3>
                   <p style={{color:'#93C5FD',fontSize:'0.85rem',margin:'0 0 1rem'}}>{p.beds} bed - {p.baths} bath - {p.sqft.toLocaleString()} sqft</p>
                   <button onClick={() => { setSelectedProperty(p); setStep('pay'); }} style={{width:'100%',backgroundColor:'#1D4ED8',border:'none',color:'#fff',padding:'0.75rem',cursor:'pointer',borderRadius:'4px'}}>Buy with Crypto</button>
