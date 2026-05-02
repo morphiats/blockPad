@@ -13,6 +13,7 @@ function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletName, setWalletName] = useState(null);
+  const [walletAddress, setWalletAddress] = useState(null);
   const [availableWallets, setAvailableWallets] = useState([]);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
@@ -21,20 +22,38 @@ function App() {
 
   useEffect(() => {
     const wallets = [];
-    if (window.cardano?.nami) wallets.push({ name: 'Nami', key: 'nami' });
-    if (window.cardano?.eternl) wallets.push({ name: 'Eternl', key: 'eternl' });
+    if (window.cardano?.nami) wallets.push({ name: 'Nami', key: 'nami', type: 'cardano' });
+    if (window.cardano?.eternl) wallets.push({ name: 'Eternl', key: 'eternl', type: 'cardano' });
+    if (window.ethereum) wallets.push({ name: 'MetaMask', key: 'metamask', type: 'ethereum' });
     setAvailableWallets(wallets);
   }, []);
 
-  const connectWallet = async (key) => {
+  const connectCardanoWallet = async (key) => {
     try {
       await window.cardano[key].enable();
       setWalletConnected(true);
       setWalletName(key.charAt(0).toUpperCase() + key.slice(1));
       setShowWalletModal(false);
     } catch (err) {
-      alert('Failed to connect wallet.');
+      alert('Failed to connect Cardano wallet.');
     }
+  };
+
+  const connectMetaMask = async () => {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setWalletConnected(true);
+      setWalletName('MetaMask');
+      setWalletAddress(accounts[0].slice(0,6)+'...'+accounts[0].slice(-4));
+      setShowWalletModal(false);
+    } catch (err) {
+      alert('Failed to connect MetaMask.');
+    }
+  };
+
+  const connectWallet = (wallet) => {
+    if (wallet.type === 'ethereum') connectMetaMask();
+    else connectCardanoWallet(wallet.key);
   };
 
   if (showAdmin) return <Admin onBack={() => setShowAdmin(false)} />;
@@ -44,13 +63,19 @@ function App() {
       {showWalletModal && (
         <div style={{position:'fixed',inset:0,backgroundColor:'rgba(0,0,0,0.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
           <div style={{backgroundColor:'#060D1A',border:'1px solid #1D4ED8',borderRadius:'8px',padding:'2rem',width:'320px'}}>
-            <h3 style={{color:'#fff',marginBottom:'1.5rem',textAlign:'center'}}>Connect Wallet</h3>
+            <h3 style={{color:'#fff',marginBottom:'0.5rem',textAlign:'center'}}>Connect Wallet</h3>
+            <p style={{color:'#93C5FD',fontSize:'0.8rem',textAlign:'center',marginBottom:'1.5rem'}}>Choose your wallet to continue</p>
             {availableWallets.length > 0 ? availableWallets.map(w => (
-              <button key={w.key} onClick={() => connectWallet(w.key)} style={{width:'100%',backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#BFDBFE',padding:'1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'0.75rem'}}>{w.name}</button>
+              <button key={w.key} onClick={() => connectWallet(w)} style={{width:'100%',backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#BFDBFE',padding:'1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'0.75rem',display:'flex',alignItems:'center',gap:'0.75rem'}}>
+                <span style={{fontSize:'1.2rem'}}>{w.name === 'MetaMask' ? '🦊' : '₳'}</span>
+                <span>{w.name}</span>
+                <span style={{marginLeft:'auto',fontSize:'0.75rem',color:'#444'}}>{w.type === 'ethereum' ? 'ETH/USDC' : 'ADA/DJED'}</span>
+              </button>
             )) : (
               <div style={{textAlign:'center'}}>
-                <p style={{color:'#BFDBFE',fontSize:'0.85rem'}}>No Cardano wallet detected.</p>
-                <a href="https://namiwallet.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA',margin:'0.5rem 0'}}>Get Nami Wallet</a>
+                <p style={{color:'#BFDBFE',fontSize:'0.85rem',marginBottom:'1rem'}}>No wallet detected.</p>
+                <a href="https://metamask.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA',marginBottom:'0.5rem'}}>Get MetaMask</a>
+                <a href="https://namiwallet.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA',marginBottom:'0.5rem'}}>Get Nami Wallet</a>
                 <a href="https://eternl.io" target="_blank" rel="noreferrer" style={{display:'block',color:'#60A5FA'}}>Get Eternl Wallet</a>
               </div>
             )}
@@ -62,7 +87,7 @@ function App() {
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'2rem'}}>
         <Logo onClick={() => setShowAdmin(true)} />
         <button onClick={() => setShowWalletModal(true)} style={{backgroundColor:walletConnected?'#052e16':'#1D4ED8',border:walletConnected?'2px solid #22c55e':'2px solid #60A5FA',color:walletConnected?'#22c55e':'#fff',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>
-          {walletConnected ? 'Connected: '+walletName : 'Connect Wallet'}
+          {walletConnected ? (walletAddress || 'Connected: '+walletName) : 'Connect Wallet'}
         </button>
       </div>
 
@@ -89,7 +114,7 @@ function App() {
             <h2 style={{color:'#fff',marginBottom:'0.5rem'}}>Purchase Property</h2>
             <p style={{color:'#BFDBFE',fontSize:'0.85rem'}}>{selectedProperty.address}</p>
             <h3 style={{color:'#60A5FA',marginBottom:'2rem'}}>${selectedProperty.price.toLocaleString()}</h3>
-            <div style={{display:'flex',gap:'1rem',marginBottom:'2rem'}}>
+            <div style={{display:'flex',gap:'1rem',marginBottom:'2rem',flexWrap:'wrap'}}>
               <button onClick={() => setSelectedPayment('Bitcoin')} style={{backgroundColor:selectedPayment==='Bitcoin'?'#F7931A':'#1a0a00',border:'2px solid #F7931A',color:selectedPayment==='Bitcoin'?'#000':'#F7931A',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>BTC</button>
               <button onClick={() => setSelectedPayment('Ethereum')} style={{backgroundColor:selectedPayment==='Ethereum'?'#627EEA':'#0a0a2e',border:'2px solid #627EEA',color:selectedPayment==='Ethereum'?'#000':'#627EEA',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>ETH</button>
               <button onClick={() => setSelectedPayment('USDC')} style={{backgroundColor:selectedPayment==='USDC'?'#2775CA':'#001a33',border:'2px solid #2775CA',color:selectedPayment==='USDC'?'#000':'#2775CA',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>USDC</button>
