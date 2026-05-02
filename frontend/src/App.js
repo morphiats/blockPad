@@ -4,9 +4,33 @@ import Logo from "./Logo";
 import './App.css';
 
 const properties = [
-  { id: 1, address: "123 Miami Beach Blvd, Miami FL", price: 850000, beds: 3, baths: 2, sqft: 1800 },
-  { id: 2, address: "456 Brickell Ave, Miami FL", price: 1200000, beds: 4, baths: 3, sqft: 2400 },
-  { id: 3, address: "789 Ocean Drive, Miami Beach FL", price: 650000, beds: 2, baths: 2, sqft: 1200 },
+  { 
+    id: 1, 
+    address: "123 Miami Beach Blvd, Miami FL", 
+    price: 850000, 
+    beds: 3, 
+    baths: 2, 
+    sqft: 1800,
+    img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop"
+  },
+  { 
+    id: 2, 
+    address: "456 Brickell Ave, Miami FL", 
+    price: 1200000, 
+    beds: 4, 
+    baths: 3, 
+    sqft: 2400,
+    img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop"
+  },
+  { 
+    id: 3, 
+    address: "789 Ocean Drive, Miami Beach FL", 
+    price: 650000, 
+    beds: 2, 
+    baths: 2, 
+    sqft: 1200,
+    img: "https://images.unsplash.com/photo-1494526585095-c41746248156?w=400&h=250&fit=crop"
+  },
 ];
 
 function App() {
@@ -96,11 +120,14 @@ function App() {
           <h2 style={{color:'#fff',marginBottom:'1.5rem'}}>Available Properties</h2>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:'1.5rem'}}>
             {properties.map(p => (
-              <div key={p.id} style={{border:'1px solid #1D4ED8',backgroundColor:'#060D1A',borderRadius:'4px',padding:'1.5rem'}}>
-                <p style={{color:'#BFDBFE',fontSize:'0.85rem',margin:'0 0 0.5rem'}}>{p.address}</p>
-                <h3 style={{color:'#60A5FA',margin:'0 0 0.5rem'}}>${p.price.toLocaleString()}</h3>
-                <p style={{color:'#93C5FD',fontSize:'0.85rem',margin:'0 0 1rem'}}>{p.beds} bed - {p.baths} bath - {p.sqft.toLocaleString()} sqft</p>
-                <button onClick={() => { setSelectedProperty(p); setStep('pay'); }} style={{width:'100%',backgroundColor:'#1D4ED8',border:'none',color:'#fff',padding:'0.75rem',cursor:'pointer',borderRadius:'4px'}}>Buy with Crypto</button>
+              <div key={p.id} style={{border:'1px solid #1D4ED8',backgroundColor:'#060D1A',borderRadius:'4px',overflow:'hidden'}}>
+                <img src={p.img} alt={p.address} style={{width:'100%',height:'200px',objectFit:'cover'}} />
+                <div style={{padding:'1.5rem'}}>
+                  <p style={{color:'#BFDBFE',fontSize:'0.85rem',margin:'0 0 0.5rem'}}>{p.address}</p>
+                  <h3 style={{color:'#60A5FA',margin:'0 0 0.5rem'}}>${p.price.toLocaleString()}</h3>
+                  <p style={{color:'#93C5FD',fontSize:'0.85rem',margin:'0 0 1rem'}}>{p.beds} bed - {p.baths} bath - {p.sqft.toLocaleString()} sqft</p>
+                  <button onClick={() => { setSelectedProperty(p); setStep('pay'); }} style={{width:'100%',backgroundColor:'#1D4ED8',border:'none',color:'#fff',padding:'0.75rem',cursor:'pointer',borderRadius:'4px'}}>Buy with Crypto</button>
+                </div>
               </div>
             ))}
           </div>
@@ -110,16 +137,19 @@ function App() {
       {step === 'pay' && selectedProperty && (
         <div style={{maxWidth:'600px',margin:'0 auto'}}>
           <button onClick={() => setStep('browse')} style={{background:'none',border:'1px solid #1D4ED8',color:'#60A5FA',padding:'0.5rem 1rem',cursor:'pointer',borderRadius:'4px',marginBottom:'1.5rem'}}>Back</button>
-          <div style={{border:'1px solid #1D4ED8',padding:'2rem',backgroundColor:'#060D1A',borderRadius:'4px'}}>
-            <h2 style={{color:'#fff',marginBottom:'0.5rem'}}>Purchase Property</h2>
-            <p style={{color:'#BFDBFE',fontSize:'0.85rem'}}>{selectedProperty.address}</p>
-            <h3 style={{color:'#60A5FA',marginBottom:'2rem'}}>${selectedProperty.price.toLocaleString()}</h3>
-            <div style={{display:'flex',gap:'1rem',marginBottom:'2rem',flexWrap:'wrap'}}>
-              <button onClick={() => setSelectedPayment('Bitcoin')} style={{backgroundColor:selectedPayment==='Bitcoin'?'#F7931A':'#1a0a00',border:'2px solid #F7931A',color:selectedPayment==='Bitcoin'?'#000':'#F7931A',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>BTC</button>
-              <button onClick={() => setSelectedPayment('Ethereum')} style={{backgroundColor:selectedPayment==='Ethereum'?'#627EEA':'#0a0a2e',border:'2px solid #627EEA',color:selectedPayment==='Ethereum'?'#000':'#627EEA',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>ETH</button>
-              <button onClick={() => setSelectedPayment('USDC')} style={{backgroundColor:selectedPayment==='USDC'?'#2775CA':'#001a33',border:'2px solid #2775CA',color:selectedPayment==='USDC'?'#000':'#2775CA',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>USDC</button>
+          <div style={{border:'1px solid #1D4ED8',borderRadius:'4px',overflow:'hidden',backgroundColor:'#060D1A'}}>
+            <img src={selectedProperty.img} alt={selectedProperty.address} style={{width:'100%',height:'200px',objectFit:'cover'}} />
+            <div style={{padding:'2rem'}}>
+              <h2 style={{color:'#fff',marginBottom:'0.5rem'}}>Purchase Property</h2>
+              <p style={{color:'#BFDBFE',fontSize:'0.85rem'}}>{selectedProperty.address}</p>
+              <h3 style={{color:'#60A5FA',marginBottom:'2rem'}}>${selectedProperty.price.toLocaleString()}</h3>
+              <div style={{display:'flex',gap:'1rem',marginBottom:'2rem',flexWrap:'wrap'}}>
+                <button onClick={() => setSelectedPayment('Bitcoin')} style={{backgroundColor:selectedPayment==='Bitcoin'?'#F7931A':'#1a0a00',border:'2px solid #F7931A',color:selectedPayment==='Bitcoin'?'#000':'#F7931A',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>BTC</button>
+                <button onClick={() => setSelectedPayment('Ethereum')} style={{backgroundColor:selectedPayment==='Ethereum'?'#627EEA':'#0a0a2e',border:'2px solid #627EEA',color:selectedPayment==='Ethereum'?'#000':'#627EEA',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>ETH</button>
+                <button onClick={() => setSelectedPayment('USDC')} style={{backgroundColor:selectedPayment==='USDC'?'#2775CA':'#001a33',border:'2px solid #2775CA',color:selectedPayment==='USDC'?'#000':'#2775CA',padding:'0.75rem 1.5rem',cursor:'pointer',borderRadius:'4px'}}>USDC</button>
+              </div>
+              {selectedPayment && <button onClick={() => setStep('kyc')} style={{width:'100%',backgroundColor:'#1D4ED8',border:'none',color:'#fff',padding:'1rem',cursor:'pointer',borderRadius:'4px'}}>Continue to KYC</button>}
             </div>
-            {selectedPayment && <button onClick={() => setStep('kyc')} style={{width:'100%',backgroundColor:'#1D4ED8',border:'none',color:'#fff',padding:'1rem',cursor:'pointer',borderRadius:'4px'}}>Continue to KYC</button>}
           </div>
         </div>
       )}
