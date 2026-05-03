@@ -14,11 +14,14 @@ function App() {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [step, setStep] = useState('browse');
-  const [filter, setFilter] = useState("All");
+  const [filter, setFilter] = useState('All');
   const [properties, setProperties] = useState([]);
+  const [search, setSearch] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
   useEffect(() => {
-    fetch(API_URL + "/api/properties")
+    fetch(API_URL + '/api/properties')
       .then(r => r.json())
       .then(d => setProperties(d.data));
   }, []);
@@ -56,7 +59,14 @@ function App() {
   };
 
   const types = ['All', ...new Set(properties.map(p => p.type))];
-  const filtered = filter === 'All' ? properties : properties.filter(p => p.type === filter);
+  
+  const filtered = properties.filter(p => {
+    const matchType = filter === 'All' || p.type === filter;
+    const matchSearch = p.address.toLowerCase().includes(search.toLowerCase());
+    const matchMin = minPrice === '' || p.price >= Number(minPrice);
+    const matchMax = maxPrice === '' || p.price <= Number(maxPrice);
+    return matchType && matchSearch && matchMin && matchMax;
+  });
 
   if (showAdmin) return <Admin onBack={() => setShowAdmin(false)} />;
 
@@ -95,28 +105,76 @@ function App() {
 
       {step === 'browse' && (
         <div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem',flexWrap:'wrap',gap:'1rem'}}>
-            <h2 style={{color:'#fff',margin:0}}>Available Properties ({filtered.length})</h2>
-            <div style={{display:'flex',gap:'0.5rem',flexWrap:'wrap'}}>
+          {/* Search and Filters */}
+          <div style={{backgroundColor:'#060D1A',border:'1px solid #1D4ED8',borderRadius:'4px',padding:'1.5rem',marginBottom:'1.5rem'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'1rem',marginBottom:'1rem'}}>
+              <div>
+                <label style={{color:'#93C5FD',fontSize:'0.8rem',display:'block',marginBottom:'0.25rem'}}>Search</label>
+                <input
+                  type="text"
+                  placeholder="Search by address..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  style={{width:'100%',backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#BFDBFE',padding:'0.6rem',borderRadius:'4px',boxSizing:'border-box'}}
+                />
+              </div>
+              <div>
+                <label style={{color:'#93C5FD',fontSize:'0.8rem',display:'block',marginBottom:'0.25rem'}}>Min Price</label>
+                <input
+                  type="number"
+                  placeholder="$0"
+                  value={minPrice}
+                  onChange={e => setMinPrice(e.target.value)}
+                  style={{width:'100%',backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#BFDBFE',padding:'0.6rem',borderRadius:'4px',boxSizing:'border-box'}}
+                />
+              </div>
+              <div>
+                <label style={{color:'#93C5FD',fontSize:'0.8rem',display:'block',marginBottom:'0.25rem'}}>Max Price</label>
+                <input
+                  type="number"
+                  placeholder="No limit"
+                  value={maxPrice}
+                  onChange={e => setMaxPrice(e.target.value)}
+                  style={{width:'100%',backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#BFDBFE',padding:'0.6rem',borderRadius:'4px',boxSizing:'border-box'}}
+                />
+              </div>
+            </div>
+            <div style={{display:'flex',gap:'0.5rem',flexWrap:'wrap',alignItems:'center'}}>
+              <span style={{color:'#93C5FD',fontSize:'0.8rem'}}>Type:</span>
               {types.map(t => (
-                <button key={t} onClick={() => setFilter(t)} style={{backgroundColor:filter===t?'#1D4ED8':'transparent',border:'1px solid #1D4ED8',color:filter===t?'#fff':'#60A5FA',padding:'0.4rem 1rem',cursor:'pointer',borderRadius:'20px',fontSize:'0.8rem'}}>{t}</button>
+                <button key={t} onClick={() => setFilter(t)} style={{backgroundColor:filter===t?'#1D4ED8':'transparent',border:'1px solid #1D4ED8',color:filter===t?'#fff':'#60A5FA',padding:'0.3rem 0.9rem',cursor:'pointer',borderRadius:'20px',fontSize:'0.8rem'}}>{t}</button>
               ))}
+              {(search || minPrice || maxPrice || filter !== 'All') && (
+                <button onClick={() => { setSearch(''); setMinPrice(''); setMaxPrice(''); setFilter('All'); }} style={{backgroundColor:'transparent',border:'1px solid #ef4444',color:'#ef4444',padding:'0.3rem 0.9rem',cursor:'pointer',borderRadius:'20px',fontSize:'0.8rem',marginLeft:'auto'}}>Clear All</button>
+              )}
             </div>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:'1.5rem'}}>
-            {filtered.map(p => (
-              <div key={p.id} style={{border:'1px solid #1D4ED8',backgroundColor:'#060D1A',borderRadius:'4px',overflow:'hidden'}}>
-                <img src={p.img} alt={p.address} style={{width:'100%',height:'200px',objectFit:'cover'}} />
-                <div style={{padding:'1.5rem'}}>
-                  <span style={{backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#93C5FD',padding:'0.2rem 0.75rem',borderRadius:'20px',fontSize:'0.75rem'}}>{p.type}</span>
-                  <p style={{color:'#BFDBFE',fontSize:'0.85rem',margin:'0.75rem 0 0.5rem'}}>{p.address}</p>
-                  <h3 style={{color:'#60A5FA',margin:'0 0 0.5rem'}}>${p.price.toLocaleString()}</h3>
-                  <p style={{color:'#93C5FD',fontSize:'0.85rem',margin:'0 0 1rem'}}>{p.beds} bed - {p.baths} bath - {p.sqft.toLocaleString()} sqft</p>
-                  <button onClick={() => { setSelectedProperty(p); setStep('pay'); }} style={{width:'100%',backgroundColor:'#1D4ED8',border:'none',color:'#fff',padding:'0.75rem',cursor:'pointer',borderRadius:'4px'}}>Buy with Crypto</button>
-                </div>
-              </div>
-            ))}
+
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}>
+            <h2 style={{color:'#fff',margin:0}}>Available Properties ({filtered.length})</h2>
           </div>
+
+          {filtered.length === 0 ? (
+            <div style={{textAlign:'center',padding:'3rem',border:'1px solid #1D4ED8',borderRadius:'4px',backgroundColor:'#060D1A'}}>
+              <p style={{color:'#BFDBFE',fontSize:'1.2rem'}}>No properties found</p>
+              <p style={{color:'#93C5FD',fontSize:'0.85rem'}}>Try adjusting your filters</p>
+            </div>
+          ) : (
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:'1.5rem'}}>
+              {filtered.map(p => (
+                <div key={p.id} style={{border:'1px solid #1D4ED8',backgroundColor:'#060D1A',borderRadius:'4px',overflow:'hidden'}}>
+                  <img src={p.img} alt={p.address} style={{width:'100%',height:'200px',objectFit:'cover'}} />
+                  <div style={{padding:'1.5rem'}}>
+                    <span style={{backgroundColor:'#0A1628',border:'1px solid #1D4ED8',color:'#93C5FD',padding:'0.2rem 0.75rem',borderRadius:'20px',fontSize:'0.75rem'}}>{p.type}</span>
+                    <p style={{color:'#BFDBFE',fontSize:'0.85rem',margin:'0.75rem 0 0.5rem'}}>{p.address}</p>
+                    <h3 style={{color:'#60A5FA',margin:'0 0 0.5rem'}}>${p.price.toLocaleString()}</h3>
+                    <p style={{color:'#93C5FD',fontSize:'0.85rem',margin:'0 0 1rem'}}>{p.beds} bed - {p.baths} bath - {p.sqft.toLocaleString()} sqft</p>
+                    <button onClick={() => { setSelectedProperty(p); setStep('pay'); }} style={{width:'100%',backgroundColor:'#1D4ED8',border:'none',color:'#fff',padding:'0.75rem',cursor:'pointer',borderRadius:'4px'}}>Buy with Crypto</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
