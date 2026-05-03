@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Admin from "./Admin";
 import Logo from "./Logo";
-import properties from "./properties";
+import { API_URL } from "./properties";
 import './App.css';
 
 function App() {
@@ -14,7 +14,14 @@ function App() {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [step, setStep] = useState('browse');
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState("All");
+  const [properties, setProperties] = useState([]);
+
+  useEffect(() => {
+    fetch(API_URL + "/api/properties")
+      .then(r => r.json())
+      .then(d => setProperties(d.data));
+  }, []);
 
   useEffect(() => {
     const wallets = [];
